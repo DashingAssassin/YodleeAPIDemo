@@ -36,6 +36,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 
 @Component
 public class ProvidersDAO extends AbstractDAO {
@@ -118,12 +119,20 @@ public class ProvidersDAO extends AbstractDAO {
 
 	}
 
-	private List<? extends Bson> getAggregates(String key) {
-		return Arrays.asList(Aggregates.group(key, getFields()));
+	private Bson getProjections() {
+		Document document = new Document();
+		document.append("countryCode", "$_id").append("total", "$total");
+		document.append("_id", 0);
+		return document;
 	}
 
 	private BsonField getFields() {
-		return new BsonField("count", new Document("$sum", 1));
+		return new BsonField("total", new Document("$sum", 1));
+	}
+
+	private List<? extends Bson> getAggregates(String key) {
+		return Arrays.asList(Aggregates.group(key, getFields()),
+				Aggregates.project(Projections.fields(getProjections())));
 	}
 
 	public Providers fetchAll() {
